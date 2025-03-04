@@ -1,8 +1,14 @@
 import discord 
 from os import environ
 from dotenv import load_dotenv
-
+from google import genai
 load_dotenv()
+
+api = environ["api_key"]
+
+aiclient = genai.Client(api_key=api)
+chat = aiclient.chats.create(model="gemini-2.0-flash")
+
 
 token = environ["TOKEN"]
 
