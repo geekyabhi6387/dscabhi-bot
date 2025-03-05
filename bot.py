@@ -31,6 +31,10 @@ class Client(commands.Bot):
 
         if message.author == client.user:
             return
+        
+        if message.content.startsWith("!"):
+            await self.process_commands(message)
+            return
 
         response = aiclient.models.generate_content(
         model="gemini-2.0-flash",
@@ -50,6 +54,9 @@ client = Client(command_prefix="!", intents=intents)
 
 GUILD_ID = discord.Object(id=guild_id)
 
-
+@client.tree.command(name="ping", description="Shows Latency", guild=GUILD_ID)
+async def ping(interaction: discord.Interaction):
+    latency = round(client.latency * 1000, 2)
+    await interaction.response.send_message(f'Latency: {latency}ms')
 
 client.run(token)
