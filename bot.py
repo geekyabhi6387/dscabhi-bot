@@ -9,7 +9,7 @@ api = environ["api_key"]
 
 aiclient = genai.Client(api_key=api)
 chat = aiclient.chats.create(model="gemini-2.0-flash")
-sys_instruct="You are a discord bot which is meant to reply to users chatting in the respective server channels."
+sys_instruct="You are a discord bot which is meant to reply to users chatting in the respective server channels. However you are only allowed to reply in 2000 characters or less because that's the discord chat limit"
 
 token = environ["TOKEN"]
 
