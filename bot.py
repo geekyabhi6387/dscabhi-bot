@@ -51,6 +51,8 @@ class Client(commands.Bot):
 
         except Exception as e:
             print(f'Error syncing commands: {e}')
+        
+        self.reminder_task.start()
 
     async def on_message(self, message):
         print(f'Message from {message.author}: {message.content}')
