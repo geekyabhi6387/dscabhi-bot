@@ -123,8 +123,6 @@ async def remind(interaction: discord.Interaction, date: str, time: str, timezon
     date = date.strip()
     time = time.strip()
     timezone_name = timezone_name.strip()
-    
-    print(f"[DEBUG] Received Date='{date}', Time='{time}', Timezone='{timezone_name}'")
 
     if timezone_name not in pytz.all_timezones:
         await interaction.response.send_message(
@@ -135,13 +133,11 @@ async def remind(interaction: discord.Interaction, date: str, time: str, timezon
 
     try:
         user_time = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
-        print(f"[DEBUG] Parsed datetime object: {user_time}")
 
         user_timezone = pytz.timezone(timezone_name)
         try:
             localized_time = user_timezone.localize(user_time)
         except ValueError as e:
-            print(f"[DEBUG] localize() error: {e}")
             await interaction.response.send_message(
                 f"⚠️ Timezone error: {e}",
                 ephemeral=True
@@ -149,7 +145,6 @@ async def remind(interaction: discord.Interaction, date: str, time: str, timezon
             return
 
         reminder_time_utc = localized_time.astimezone(pytz.UTC)
-        print(f"[DEBUG] Localized time in UTC: {reminder_time_utc.isoformat()}")
 
         now_utc = datetime.now(pytz.UTC)
         if reminder_time_utc <= now_utc:
@@ -175,7 +170,6 @@ async def remind(interaction: discord.Interaction, date: str, time: str, timezon
         )
 
     except ValueError as e:
-        print(f"[DEBUG] Date/time parsing error: {e}")
         await interaction.response.send_message(
             "⚠️ Invalid date/time format! Use `YYYY-MM-DD` and `HH:MM` (24-hour).",
             ephemeral=True
