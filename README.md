@@ -10,7 +10,7 @@ This is a simple discord bot made from [discord.py](https://discordpy.readthedoc
 	> -
 - Add feature to modify reminders
 - Poll functionality
-- AI-powered summaries ( also need to chat log history to an extent to have coherent, continuous conversation with the bot )
+- AI-powered summaries ( also need to add chat log history to an extent to have coherent, continuous conversation with the bot )
 - Custom member join messages
 - Music-Queue System
 - Auto-deletion of expired reminders
