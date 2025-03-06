@@ -120,10 +120,6 @@ async def ping(interaction: discord.Interaction):
     message="Reminder message"
 )
 async def remind(interaction: discord.Interaction, date: str, time: str, timezone_name: str, message: str):
-    """
-    Example usage:
-    /remind date:2025-03-06 time:14:30 timezone_name:Asia/Kolkata message:Doctor Appointment
-    """
     date = date.strip()
     time = time.strip()
     timezone_name = timezone_name.strip()
@@ -226,6 +222,47 @@ async def cancelreminder(interaction: discord.Interaction, index: int):
         f"✅ Reminder `{reminder_to_remove['message']}` has been cancelled.", ephemeral=True
     )
 
+@client.tree.command(name="poll", description="Create a poll with up to 5 options", guild=GUILD_ID)
+@app_commands.describe(
+    question="The poll question",
+    option1="Poll option 1",
+    option2="Poll option 2",
+    option3="Poll option 3 (optional)",
+    option4="Poll option 4 (optional)",
+    option5="Poll option 5 (optional)"
+)
+async def poll(interaction: discord.Interaction, question: str, option1: str, option2: str, option3: str = None, option4: str = None, option5: str = None):
+    options = [option1, option2]
+    if option3:
+        options.append(option3)
+    if option4:
+        options.append(option4)
+    if option5:
+        options.append(option5)
+    
+    if len(options) < 2:
+        await interaction.response.send_message("You must provide at least two poll options.", ephemeral=True)
+        return
 
+    
+    number_emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
+    
+    
+    poll_description = ""
+    for idx, option in enumerate(options):
+        poll_description += f"{number_emojis[idx]} {option}\n"
+
+    
+    embed = discord.Embed(title=question, description=poll_description, color=discord.Color.blue())
+    embed.set_footer(text=f"Poll created by {interaction.user.display_name}")
+
+    
+    await interaction.response.send_message(embed=embed)
+    
+    poll_message = await interaction.original_response()
+
+    
+    for idx in range(len(options)):
+        await poll_message.add_reaction(number_emojis[idx])
 
 client.run(token)
