@@ -15,6 +15,7 @@ api = environ["api_key"]
 token = environ["TOKEN"]
 guild_id = environ["guild_id"]
 REMINDER_FILE = "reminders.json"
+WELCOME_CONFIG_FILE = "welcome_config.json"
 
 aiclient = genai.Client(api_key=api)
 sys_instruct="You are a discord bot which is meant to reply to users chatting in the respective server channels. However you are only allowed to reply in 1800 characters or less because that's the discord chat limit, so always check your response to be in limit"
@@ -36,6 +37,17 @@ def load_reminders():
 def save_reminders(reminders):
     with open(REMINDER_FILE, "w") as file:
         json.dump(reminders, file, indent=4)
+
+def load_welcome_config():
+    try:
+        with open(WELCOME_CONFIG_FILE, "r") as file:
+            return json.load(file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def save_welcome_config(config):
+    with open(WELCOME_CONFIG_FILE, "w") as file:
+        json.dump(config, file, indent=4)
 
 
 class Client(commands.Bot):
@@ -95,6 +107,24 @@ class Client(commands.Bot):
         if to_remove:
             reminders = [rem for idx, rem in enumerate(reminders) if idx not in to_remove]
             save_reminders(reminders)
+    
+    async def on_member_join(member):
+        config = load_welcome_config()
+        guild_id = str(member.guild.id)
+
+        if guild_id not in config or not config[guild_id].get("channel_id"):
+            return
+
+        channel_id = config[guild_id]["channel_id"]
+        channel = member.guild.get_channel(channel_id)
+
+        if not channel:
+            return
+
+        welcome_message = config[guild_id].get("message", "Welcome to the server, {user}!")
+        welcome_message = welcome_message.replace("{user}", member.mention)
+
+        await channel.send(welcome_message)
 
 
 intents  = discord.Intents.default()
@@ -107,10 +137,6 @@ GUILD_ID = discord.Object(id=guild_id)
 async def ping(interaction: discord.Interaction):
     latency = round(client.latency * 1000, 2)
     await interaction.response.send_message(f'Latency: {latency}ms')
-
-# @client.tree.command(name="remindme", description="Set a reminder")
-# async def remindme(interaction: discord.Interaction):
-#     await interaction.response.send_message(f'Reminder')
 
 @client.tree.command(name="remind", description="Set a reminder at a specific date/time in a given timezone.",guild=GUILD_ID)
 @app_commands.describe(
@@ -258,5 +284,49 @@ async def poll(interaction: discord.Interaction, question: str, option1: str, op
     
     for idx in range(len(options)):
         await poll_message.add_reaction(number_emojis[idx])
+
+@client.tree.command(name="setwelcomechannel", description="Set the channel for welcome messages", guild=GUILD_ID)
+@app_commands.describe(channel="The channel to send welcome messages (set 'none' to disable)")
+async def set_welcome_channel(interaction: discord.Interaction, channel: str):
+    config = load_welcome_config()
+    guild_id = str(interaction.guild_id)
+
+    if channel.lower() == "none":
+        if guild_id in config:
+            config[guild_id]["channel_id"] = None
+        else:
+            config[guild_id] = {"channel_id": None, "message": "Welcome to the server, {user}!"}
+        save_welcome_config(config)
+        await interaction.response.send_message("🚫 Welcome messages have been disabled.", ephemeral=True)
+        return
+
+    if channel.startswith("<#") and channel.endswith(">"):
+        channel_id = int(channel[2:-1])
+    else:
+        await interaction.response.send_message("❌ Invalid channel format. Please mention the channel like #welcome.", ephemeral=True)
+        return
+
+    if guild_id not in config:
+        config[guild_id] = {"channel_id": channel_id, "message": "Welcome to the server, {user}!"}
+    else:
+        config[guild_id]["channel_id"] = channel_id
+
+    save_welcome_config(config)
+    await interaction.response.send_message(f"✅ Welcome messages will be sent in <#{channel_id}>.", ephemeral=True)
+
+
+@client.tree.command(name="setwelcomemessage", description="Set the welcome message", guild=GUILD_ID)
+@app_commands.describe(message="Custom welcome message (use {user} to mention the new user)")
+async def set_welcome_message(interaction: discord.Interaction, message: str):
+    config = load_welcome_config()
+    guild_id = str(interaction.guild_id)
+
+    if guild_id not in config:
+        config[guild_id] = {"channel_id": None, "message": message}
+    else:
+        config[guild_id]["message"] = message
+
+    save_welcome_config(config)
+    await interaction.response.send_message("✅ Welcome message updated.", ephemeral=True)
 
 client.run(token)
