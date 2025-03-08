@@ -108,7 +108,7 @@ class Client(commands.Bot):
             reminders = [rem for idx, rem in enumerate(reminders) if idx not in to_remove]
             save_reminders(reminders)
     
-    async def on_member_join(member):
+    async def on_member_join(self, member):
         config = load_welcome_config()
         guild_id = str(member.guild.id)
 
@@ -129,7 +129,9 @@ class Client(commands.Bot):
 
 intents  = discord.Intents.default()
 intents.message_content = True
+intents.members = True
 client = Client(command_prefix="!", intents=intents)
+
 
 GUILD_ID = discord.Object(id=guild_id)
 
